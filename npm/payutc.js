@@ -299,6 +299,17 @@ module.exports = {
 			
 		},
 
+		keys: {
+			registerApplication: function(params){
+				//var params = {appUrl, appName, [appDesc]}
+				return payutcAPI.genericApiCall("KEY", "registerApplication", {app_url:params.appUrl, app_name: params.appName, app_desc: params.appDesc || null}, params.callback);
+			},
+
+			getCurrentUserApplications: function(params){
+				return payutcAPI.genericApiCall("KEY", "getCurrentUserApplications", {}, params.callback);
+			}
+		},
+
 		users: {
 			transfer: function(params){
 				// var params = {amount, usr_id, message};

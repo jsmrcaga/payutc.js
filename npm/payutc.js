@@ -73,6 +73,7 @@ var payutcAPI = {
 		systemID : "payutc",
 		async: false,
 		app_key: "44682eb98b373105b99511d3ddd0034f", 
+		//JoRaspi: da736d19eeddd8b0bd83fa0c002b445f
 		fun_id: 2,
 		sessionID : 0,
 		logged_usr : "",
@@ -227,6 +228,14 @@ module.exports = {
 				payutcAPI.config.systemID = sysId;
 			},
 
+			setAppKey: function(appKey){
+				if (typeof appKey == "undefined"){
+					throw new Error("appKey is required for payutc.config.setAppKey");
+				}
+
+				payutcAPI.config.app_key = appKey;
+			}
+
 			isAsync: function (async){
 				if(typeof async == "undefined"){
 					throw new Error("async is required for payutc.config.isAsync");
@@ -299,6 +308,31 @@ module.exports = {
 			
 		},
 
+		selfpos: {
+			getBuyerInfo : function(params){
+				// var params = {login}
+				return payutcAPI.genericApiCall("SELFPOS", "getBuyerInfo", {login: params.login}, params.callback);
+			},
+
+			getArticles: function(params){
+				return this.articles.getArticles(params, true);
+			},
+
+			getCategories: function(params){
+				return this.articles.getCategories(params, true);
+			},
+
+			cancel: function(params){
+				// var params = {funId, purId}
+				return payutcAPI.genericApiCall("SELFPOS", "cancel", {fun_id:params.funId, pur_id:params.purId}, callback:params.callback);
+			},
+
+			transaction: function(params){
+				// var params = {funId, buyer, objIds}
+				return payutcAPI.genericApiCall("SELFPOS", "transaction", {fun_id:params.funId, buyer: params.buyer, obj_ids: params.objIds}, callback:params.callback);
+			}
+		},
+
 		keys: {
 			registerApplication: function(params){
 				//var params = {appUrl, appName, [appDesc]}
@@ -325,9 +359,14 @@ module.exports = {
 		// GESTION ARTICLES
 		*******************/
 		articles: {
-			getArticles: function(params){
+			getArticles: function(params, selfpos){
 				//var params = {funId}
-				return payutcAPI.genericApiCall("POSS3", "getArticles", {fun_id:params.funId}, params.callback);
+				if(selfpos){
+					return payutcAPI.genericApiCall("SELFPOS", "getArticles", {fun_id:params.funId}, params.callback);
+				}else{
+					return payutcAPI.genericApiCall("POSS3", "getArticles", {fun_id:params.funId}, params.callback);	
+				}
+
 			},
 
 			getProducts: function(params){
@@ -336,10 +375,13 @@ module.exports = {
 				return payutcAPI.genericApiCall("GESARTICLE", "getProducts", {fun_ids:params.funIdsArray},params.callback);			
 			}, 
 
-			getCategories: function(params){
+			getCategories: function(params, selfpos){
 				// var params = {funIdsArray};
-
-				return payutcAPI.genericApiCall("GESARTICLE", "getCategories", {fun_ids: params.funIdsArray},params.callback);
+				if(selfpos){
+					return payutcAPI.genericApiCall("SELFPOS", "getCategories", {fun_id: params.funIdsArray[0]},params.callback);
+				}else{
+					return payutcAPI.genericApiCall("GESARTICLE", "getCategories", {fun_ids: params.funIdsArray},params.callback);
+				}
 			},
 
 			getCategory: function(params){

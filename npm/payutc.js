@@ -234,7 +234,7 @@ module.exports = {
 				}
 
 				payutcAPI.config.app_key = appKey;
-			}
+			},
 
 			isAsync: function (async){
 				if(typeof async == "undefined"){
@@ -308,6 +308,28 @@ module.exports = {
 			
 		},
 
+		rights: {
+			setUserRight: function(params){
+				// var params= {usrId, service, funId}
+				return payutcAPI.genericApiCall("ADMINRIGHT", "setUserRight", {usr_id: params.usrId, service: params.service, fun_id: params.funId}, params.callback);
+			},
+
+			setApplicationRight: function(params){
+				// var params = {appId, service, funId}
+				return payutcAPI.genericApiCall("ADMINRIGHT", "setApplicationRight", {app_id: params.appId, service: params.service, fun_id: params.funId}, params.callback);
+			},
+
+			removeUserRight: function(params){
+				// var params = {usrId, service, funId}
+				return payutcAPI.genericApiCall("ADMINRIGHT", "removeUserRight", {usr_id: params.usrId, service: params.service, fun_id: params.funId}, params.callback);
+			},
+
+			removeApplicationRight: function(params){
+				// var params = {appId, service, funId}
+				return payutcAPI.genericApiCall("ADMINRIGHT", "removeApplicationRight", {app_id:params.appId, service: params.service, fun_id: params.funId}, params.callback);
+			}
+		},
+
 		selfpos: {
 			getBuyerInfo : function(params){
 				// var params = {login}
@@ -315,21 +337,23 @@ module.exports = {
 			},
 
 			getArticles: function(params){
-				return this.articles.getArticles(params, true);
+				//var params = {funId}
+				return module.exports.articles.getArticles(params, true);
 			},
 
 			getCategories: function(params){
-				return this.articles.getCategories(params, true);
+				// var params = {funIdsArray}
+				return module.exports.articles.getCategories(params, true);
 			},
 
 			cancel: function(params){
 				// var params = {funId, purId}
-				return payutcAPI.genericApiCall("SELFPOS", "cancel", {fun_id:params.funId, pur_id:params.purId}, callback:params.callback);
+				return payutcAPI.genericApiCall("SELFPOS", "cancel", {fun_id:params.funId, pur_id:params.purId}, params.callback);
 			},
 
 			transaction: function(params){
 				// var params = {funId, buyer, objIds}
-				return payutcAPI.genericApiCall("SELFPOS", "transaction", {fun_id:params.funId, buyer: params.buyer, obj_ids: params.objIds}, callback:params.callback);
+				return payutcAPI.genericApiCall("SELFPOS", "transaction", {fun_id:params.funId, buyer: params.buyer, obj_ids: params.objIds}, params.callback);
 			}
 		},
 

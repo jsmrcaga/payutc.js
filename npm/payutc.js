@@ -24,47 +24,6 @@
 // *****************************************************************************
 var http = require('https');
 
-function timeInSQL () {
-
-	var today = new Date();
-	var dd = today.getDate();
-	var mm = today.getMonth()+1; //January is 0!
-	var yyyy = today.getFullYear();
-
-	var min = today.getMinutes();
-	var hrs = today.getHours();
-	var sec = today.getSeconds();
-
-	if(dd<10) {
-	    dd='0'+dd
-	} 
-
-	if(mm<10) {
-	    mm='0'+mm
-	} 
-
-	if (hrs<10){
-		hrs = '0' + hrs;
-	}
-
-
-	if (min<10){
-		min = '0' + min;
-	}
-
-
-	if (sec<10){
-		sec = '0' + sec;
-	}
-	today = yyyy+'-'+mm+'-'+dd+' '+hrs+':'+min+':'+sec;
-	
-	// console.log(today);
-	return today;
-}
-
-// date.toISOString
-
-
 var payutcAPI = {
 	config: {
 		url : "api.nemopay.net",
@@ -77,7 +36,8 @@ var payutcAPI = {
 		fun_id: 2,
 		sessionID : 0,
 		logged_usr : "",
-		loginMethod : "payuser"
+		loginMethod : "payuser",
+		date : new Date();
 	},
 
 	checkSession : false,
@@ -277,7 +237,7 @@ module.exports = {
 			},
 
 			payuser_default: function(){
-				var resp = JSON.parse(payutcAPI.genericApiCall("GESARTICLE", "login2", {login: payutcAPI.config.username, password: payutcAPI.config.password},params.callback));
+				var resp = JSON.parse(payutcAPI.genericApiCall("GESARTICLE", "login2", {login: payutcAPI.config.username, password: payutcAPI.config.password}));
 				if (typeof resp.sessionid != "undefined"){
 					payutcAPI.config.sessionID = resp.sessionid;
 					payutcAPI.config.logged_usr = resp.username;
@@ -289,7 +249,7 @@ module.exports = {
 		stats: {
 			getNbSell : function(params){
 				// var params = {objId, funId, start, end, tick};
-				return payutcAPI.genericApiCall("STATS", "getNbSell", {obj_id: params.objId, fun_id: params.funId, start: params.start, end: params.end || timeInSQL()},params.callback);
+				return payutcAPI.genericApiCall("STATS", "getNbSell", {obj_id: params.objId, fun_id: params.funId, start: params.start, end: params.end || payutcAPI.config.date.toISOString()},params.callback);
 			},
 
 			getRevenue: function(params){
@@ -311,22 +271,22 @@ module.exports = {
 		rights: {
 			setUserRight: function(params){
 				// var params= {usrId, service, funId}
-				return payutcAPI.genericApiCall("ADMINRIGHT", "setUserRight", {usr_id: params.usrId, service: params.service, fun_id: params.funId}, params.callback);
+				return payutcAPI.genericApiCall("USERRIGHT", "setUserRight", {usr_id: params.usrId, service: params.service, fun_id: params.funId}, params.callback);
 			},
 
 			setApplicationRight: function(params){
 				// var params = {appId, service, funId}
-				return payutcAPI.genericApiCall("ADMINRIGHT", "setApplicationRight", {app_id: params.appId, service: params.service, fun_id: params.funId}, params.callback);
+				return payutcAPI.genericApiCall("APPLICATIONRIGHT", "setApplicationRight", {app_id: params.appId, service: params.service, fun_id: params.funId}, params.callback);
 			},
 
 			removeUserRight: function(params){
 				// var params = {usrId, service, funId}
-				return payutcAPI.genericApiCall("ADMINRIGHT", "removeUserRight", {usr_id: params.usrId, service: params.service, fun_id: params.funId}, params.callback);
+				return payutcAPI.genericApiCall("USERRIGHT", "removeUserRight", {usr_id: params.usrId, service: params.service, fun_id: params.funId}, params.callback);
 			},
 
 			removeApplicationRight: function(params){
 				// var params = {appId, service, funId}
-				return payutcAPI.genericApiCall("ADMINRIGHT", "removeApplicationRight", {app_id:params.appId, service: params.service, fun_id: params.funId}, params.callback);
+				return payutcAPI.genericApiCall("APPLICATIONRIGHT", "removeApplicationRight", {app_id:params.appId, service: params.service, fun_id: params.funId}, params.callback);
 			}
 		},
 
@@ -455,8 +415,9 @@ module.exports = {
 				return payutcAPI.genericApiCall("GESARTICLE", "getProduct", {obj_id: params.objId, fun_id: params.funId || "null"},params.callback);
 			},
 
-			getProductsByCategory: function(params){
+			getProductsByCategory: function(params, selfpos){
 				// var params = {funIdsArray};
+				selfpos = (selfpos) ? selfpos : 0;
 
 				// funIds as array
 				var prods = [], cats = [];
@@ -494,7 +455,7 @@ module.exports = {
 					}});
 
 					
-				}});
+				}}, selfpos);
 
 
 			},

@@ -37,46 +37,10 @@ var payutcAPI = {
 		sessionID : 0,
 		logged_usr : "",
 		loginMethod : "payuser",
-		date : new Date();
+		date : new Date(),
+		debug: false,
 	},
 
-	checkSession : false,
-
-
-	/*
-	loginPayutcUser: function(login, pass) {
-		var params = {login: login, password: pass};
-		var xml = new XMLHttpRequest();
-		xml.open("POST", this.config.url + "GESARTICLE/login2?system_id=" + this.config.systemID, false);
-		xml.setRequestHeader("Content-type", "application/json");
-		xml.send(JSON.stringify(params));
-		var resp = JSON.parse(xml.responseText);
-		if (typeof resp.sessionid != "undefined"){
-			this.config.sessionID = JSON.parse(xml.responseText).sessionid;
-			this.logged_usr = JSON.parse(xml.responseText).username;
-			console.info("Logged user successfully: ", this.config.logged_usr);
-			return resp;
-		}else{
-			throw new Error("Error logging in: " + resp.error.message);
-		}
-	},
-
-	loginCASUser: function(service, ticket){
-
-	},
-
-	verifySession: function(service, ticket) {
-		if (this.config.sessionID == 0){
-			console.warn("User not logged, logging...");
-			if (this.config.loginMethod == 'CAS'){
-				return this.loginCASUser()
-			}else if(this.config.loginMethod == 'payuser'){
-				return this.loginPayutcUser(this.config.username, this.config.password);
-			}
-		}
-		console.info("User already logged, session_id is: ", this.config.sessionID);
-	},
-	*/
 
 	genericApiCall: function(service, method, data, callback) {
 
@@ -103,7 +67,8 @@ var payutcAPI = {
 			});
 
 			res.on('end', function(){
-				callback(response);
+				if(payutcAPI.config.debug) console.log("Request to " + service + "/" + method + " finished!");
+				if(callback) callback(response);
 			});
 		});
 
@@ -167,7 +132,15 @@ module.exports = {
 
 		config:{
 			//use to make setter functions
-			//to modify payutcAPI config 
+			//to modify payutcAPI config
+			debug: function(act){
+				if(act === "on" || typeof act == "undefined"){
+					payutcAPI.config.debug = true;
+				}else if (act === "off"){
+					payutcAPI.config.debug = false;
+				}
+			},
+
 			setUrl: function (url) {
 				if(typeof url == "undefined") throw new Error("url is required for payutc.config.setUrl");
 				payutcAPI.config.url = url;
@@ -216,7 +189,19 @@ module.exports = {
 		login: {
 			cas: function(params){
 				// var params = {service, ticket}
-				return payutcAPI.genericApiCall("GESARTICLE", "loginCas", {service: params.service, ticket: params.ticket}, params.callback);
+				return payutcAPI.genericApiCall("GESARTICLE", "loginCas2", {service: params.service, ticket: params.ticket}, function(data){
+					var resp = JSON.parse(data);
+
+					if (typeof resp.sessionid != "undefined"){
+						payutcAPI.config.sessionID = resp.sessionid;
+						payutcAPI.config.logged_usr = resp.username;
+						console.log("Logged user successfully:", payutcAPI.config.logged_usr);
+					}else{
+						console.log("Invalid login, error: " + resp.error.type + " (" + resp.error.code+ ") :"+ resp.error.message);
+					}
+
+					if(params.callback) params.callback(data);
+				});
 			},
 
 			payuser: function(params){
@@ -229,20 +214,25 @@ module.exports = {
 						payutcAPI.config.sessionID = resp.sessionid;
 						payutcAPI.config.logged_usr = resp.username;
 						console.log("Logged user successfully:", payutcAPI.config.logged_usr);
+					}else{
+						console.log("Invalid login, error: " + resp.error);
 					}
 					
-					params.callback(JSON.stringify(data));
+					if(params.callback) params.callback(data);
 				});
 
 			},
 
 			payuser_default: function(){
-				var resp = JSON.parse(payutcAPI.genericApiCall("GESARTICLE", "login2", {login: payutcAPI.config.username, password: payutcAPI.config.password}));
-				if (typeof resp.sessionid != "undefined"){
-					payutcAPI.config.sessionID = resp.sessionid;
-					payutcAPI.config.logged_usr = resp.username;
-					console.log("Logged user successfully:", payutcAPI.config.logged_usr);
-				}
+				payutcAPI.genericApiCall("GESARTICLE", "login2", {login: payutcAPI.config.username, password: payutcAPI.config.password}, function(data){
+					var resp = JSON.parse(data);
+
+					if (typeof resp.sessionid != "undefined"){
+						payutcAPI.config.sessionID = resp.sessionid;
+						payutcAPI.config.logged_usr = resp.username;
+						console.log("Logged user successfully:", payutcAPI.config.logged_usr);
+					}
+				});
 			}
 		},
 

@@ -178,7 +178,7 @@ module.exports = {
 
 
 			setFundation: function(funId){
-				if(typeof funI == "undefined"){
+				if(typeof funId == "undefined"){
 					throw new Error("funId is required for payutc.config.setFundation");
 				}
 				payutcAPI.config.fun_id = funId;

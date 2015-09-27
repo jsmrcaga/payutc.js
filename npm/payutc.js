@@ -178,7 +178,7 @@ module.exports = {
 
 
 			setFundation: function(funId){
-				if(typeof funI == "undefined"){
+				if(typeof funId == "undefined"){
 					throw new Error("funId is required for payutc.config.setFundation");
 				}
 				payutcAPI.config.fun_id = funId;
@@ -201,6 +201,13 @@ module.exports = {
 					}
 
 					if(params.callback) params.callback(data);
+
+					if(typeof resp.sessionid != "undefined"){
+						return 1;
+					}else{
+						return 0;
+					}
+
 				});
 			},
 
@@ -219,6 +226,12 @@ module.exports = {
 					}
 					
 					if(params.callback) params.callback(data);
+
+					if(typeof resp.sessionid != "undefined"){
+						return 1;
+					}else{
+						return 0;
+					}
 				});
 
 			},
@@ -231,6 +244,12 @@ module.exports = {
 						payutcAPI.config.sessionID = resp.sessionid;
 						payutcAPI.config.logged_usr = resp.username;
 						console.log("Logged user successfully:", payutcAPI.config.logged_usr);
+					}
+
+					if(typeof resp.sessionid != "undefined"){
+						return 1;
+					}else{
+						return 0;
 					}
 				});
 			}
@@ -253,6 +272,11 @@ module.exports = {
 					return payutcAPI.genericApiCall("STATS", "getRevenue", {fun_id: params.funId, start: params.start || "1999-01-01T00:00", end: params.end || "2060-01-01T00:00"}, params.callback);
 				}
 			},
+
+			getSales: function(params){
+				//var params = {funId, start, end}
+				return payutcAPI.genericApiCall("GESSALES", "getSales",{fun_id: params.funId, start: params.start, end: params.end}, params.callback);
+			}
 
 
 			
@@ -328,10 +352,6 @@ module.exports = {
 			},
 		},
 
-
-		/*******************
-		// GESTION ARTICLES
-		*******************/
 		articles: {
 			getArticles: function(params, selfpos){
 				//var params = {funId}
@@ -472,8 +492,8 @@ module.exports = {
 		},
 
 		reload: {
-			info:function(){
-				return payutcAPI.genericApiCall("RELOAD", "info");
+			info:function(params){
+				return payutcAPI.genericApiCall("RELOAD", "info", null, params.callback);
 			},
 
 			reload: function(params){
@@ -484,7 +504,7 @@ module.exports = {
 
 		websale: {
 			createTransaction: function(params){
-				//var params = {itemsArray, funId, mail, returnUrl, callbackUrl}
+				//var params = {itemsArray[[item1, qtty1],[item2, qtty2]...], funId, mail, returnUrl, callbackUrl}
 				return payutcAPI.genericApiCall("WEBSALE","createTransaction", {items: params.itemsArray, fun_id: params.funId, mail:params.mail, return_url: params.returnUrl, callback_url: params.callbackUrl}, params.callback);
 			},
 

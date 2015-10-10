@@ -200,14 +200,17 @@ module.exports = {
 						console.log("Invalid login, error: " + resp.error.type + " (" + resp.error.code+ ") :"+ resp.error.message);
 					}
 
-					if(params.callback) params.callback(data);
+					var result=0;
 
 					if(typeof resp.sessionid != "undefined"){
-						return 1;
+						result = 1;
 					}else{
-						return 0;
+						result = 0;
 					}
 
+					if(params.callback) params.callback(result,data);
+
+					return result;
 				});
 			},
 
@@ -225,13 +228,15 @@ module.exports = {
 						console.log("Invalid login, error: " + resp.error);
 					}
 					
-					if(params.callback) params.callback(data);
-
+					var result = 0;
 					if(typeof resp.sessionid != "undefined"){
-						return 1;
+						result = 1;
 					}else{
-						return 0;
+						result = 0;
 					}
+
+					if(params.callback) params.callback(result, data);
+
 				});
 
 			},
@@ -274,9 +279,32 @@ module.exports = {
 			},
 
 			getSales: function(params){
-				//var params = {funId, start, end}
-				return payutcAPI.genericApiCall("GESSALES", "getSales",{fun_id: params.funId, start: params.start, end: params.end}, params.callback);
+				//var params = {funId, start, end, rowCount}
+				return payutcAPI.genericApiCall("GESSALES", "getSales",{fun_id: params.funId, start: params.start, end: params.end, row_count:rowCount}, params.callback);
+			},
+
+			getSalesByProduct: function(params){
+				// var params =  {funId, objId, start, end}
+				module.exports.stats.getSales({funId: params.funId, start:params.start, end: params.end, callback:function(salesData){
+					salesData = JSON.parse(salesData);
+
+					var result = [];
+
+					for(var i = 0; i<salesData.count; i++){
+						var transSize = salesData.transactions[i].rows.length;
+						for(var j = 0; j<transSize; j++){
+							if(salesData.transactions[i].rows[j].item.id == params.objId && salesData.transactions[i].rows[j].removed == false){
+								result.push(salesData.transactions[i].rows[j]);
+							}
+						}
+					}
+
+					if(params.callback) params.callback(result);
+					return result;
+
+				}});
 			}
+			
 
 
 			

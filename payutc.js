@@ -27,12 +27,11 @@ var http = require('https');
 var payutcAPI = {
 	config: {
 		url : "api.nemopay.net",
-		username : "colinajo",
-		password : "Tennis15",
+		username : "username",
+		password : "password",
 		systemID : "payutc",
 		async: false,
-		app_key: "44682eb98b373105b99511d3ddd0034f", 
-		//JoRaspi: da736d19eeddd8b0bd83fa0c002b445f
+		app_key: "", 
 		fun_id: 2,
 		sessionID : 0,
 		logged_usr : "",
@@ -59,7 +58,7 @@ var payutcAPI = {
 			}
 		};
 		
-		var request = http.request(options, function(res){
+		var request = http.request(options, function (res){
 			res.setEncoding('utf8');
 			res.on('data', function(chunk){
 				// console.log('Body: ' + chunk);
@@ -68,6 +67,7 @@ var payutcAPI = {
 
 			res.on('end', function(){
 				if(payutcAPI.config.debug) console.log("Request to " + service + "/" + method + " finished!");
+				if(payutcAPI.config.debug) console.log("Reponse: ", JSON.parse(response));
 				if(callback) callback(response);
 			});
 		});
@@ -83,7 +83,7 @@ var payutcAPI = {
 			options.headers = {
 				'Content-type' : "application/json"
 			};
-
+			if(payutcAPI.config.debug) console.log("Sending: ", data);
 			request.write(JSON.stringify(data)); //session_id: this.sessionID
 			request.end();
 		}else{
@@ -280,7 +280,7 @@ module.exports = {
 
 			getSales: function(params){
 				//var params = {funId, start, end, rowCount}
-				return payutcAPI.genericApiCall("GESSALES", "getSales",{fun_id: params.funId, start: params.start, end: params.end, row_count:rowCount}, params.callback);
+				return payutcAPI.genericApiCall("GESSALES", "getSales",{fun_id: params.funId, start: params.start, end: params.end, row_count:params.rowCount}, params.callback);
 			},
 
 			getSalesByProduct: function(params){
@@ -329,6 +329,16 @@ module.exports = {
 			removeApplicationRight: function(params){
 				// var params = {appId, service, funId}
 				return payutcAPI.genericApiCall("APPLICATIONRIGHT", "removeApplicationRight", {app_id:params.appId, service: params.service, fun_id: params.funId}, params.callback);
+			},
+
+			block: function(params){
+				// var params = {usrId, dateFin, funId, reason}
+				return payutcAPI.genericApiCall("BLOCKED", "block", {fun_id: params.funId, usr_id: params.usrId, date_fin: params.dateFin, raison: params.reason}, params.callback);
+			},
+
+			removeBlock: function(params){
+				// var params = {bloId, funId}
+				return payutcAPI.genericApiCall("BLOCKED", "remove", {blo_id: params.bloId, fun_id: params.funId}, params.callback);
 			}
 		},
 
@@ -494,7 +504,7 @@ module.exports = {
 
 						params.callback(resp);
 						return resp;
-					}});
+					}}, selfpos);
 
 					
 				}}, selfpos);
@@ -503,15 +513,15 @@ module.exports = {
 			},
 
 			setProduct: function(params){
-				// var params = {name, category, price, stock, alcool, image, funId, objId, tva, cotisant};
+				// var params = {name, category, price, stock, alcool, image, image_path, funId, objId, tva, cotisant, meta, parent};
 
 				//objId, tva and cotisant are optional
 				//objId is only if remaking an article
 				//prix en euros
 				if (params.alcool == true) params.alcool = 0;
-				if (params.alcool == false) params.alcool =1;
+				if (params.alcool == false) params.alcool = 1;
 				return payutcAPI.genericApiCall("GESARTICLE", "setProduct", {name: params.name, parent: params.category, prix: params.price, stock: params.stock, alcool: params.alcool, 
-					image: params.image, fun_id: params.funId, obj_id: params.objId || null, tva: params.tva || "0.00", cotisant: params.cotisant || "1"},params.callback);
+					image: params.image, image_path: params.image_path, fun_id: params.funId, obj_id: params.objId || null, tva: params.tva || "0.00", cotisant: params.cotisant || "1", meta: params.meta},params.callback);
 			},
 
 			deleteProduct: function(params){
@@ -545,6 +555,12 @@ module.exports = {
 			getTransactionInfo: function(params){
 				//var params = funId, traId
 				return payutcAPI.genericApiCall("WEBSALE", "getTransactionInfo", {fun_id: params.funId, tra_id: params.traId}, params.callback);
+			}
+		},
+
+		stocks: {
+			getProducts : function(params){
+				return payutcAPI.genericApiCall('STOCKS', 'getProducts', {fun_id: params.funId});
 			}
 		}
 	

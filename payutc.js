@@ -339,6 +339,9 @@ module.exports = {
 			removeBlock: function(params){
 				// var params = {bloId, funId}
 				return payutcAPI.genericApiCall("BLOCKED", "remove", {blo_id: params.bloId, fun_id: params.funId}, params.callback);
+			},
+			getBlocked: function(params){
+				return payutcAPI.genericApiCall("BLOCKED", "getAll", {fun_id: params.funId}, params.callback);
 			}
 		},
 
@@ -560,9 +563,31 @@ module.exports = {
 
 		stocks: {
 			getProducts : function(params){
-				return payutcAPI.genericApiCall('STOCKS', 'getProducts', {fun_id: params.funId});
+				return payutcAPI.genericApiCall('STOCKS', 'getProducts', {fun_id: params.funId}, params.callback);
+			}
+		},
+		keyboards: {
+			getKeyboards: function(params){
+				return payutcAPI.genericApiCall("SALESKEYBOARD", "getKeyboards", {fun_id: params.funId}, params.callback);
+			},
+
+			getKeyboard: function(params) {
+				return payutcAPI.genericApiCall("SALESKEYBOARD","getKeyboard", {fun_id: params.funId, id: params.keyboardId}, params.callback);
+			},
+
+			getProducts: function(params){
+				var products = [];
+				var parent = this;
+				this.getKeyboards({funId: params.funId, callback: (dataKeyboards) => {
+					var keyboards = JSON.parse(dataKeyboards);
+					var keyboard = keyboards.find( (keyboard) => { return keyboard.id == params.keyboardId });
+					if (keyboard) {
+						products = keyboard.data.items;
+					}
+					params.callback(products);
+					return products;
+				}})
 			}
 		}
-	
 };
 

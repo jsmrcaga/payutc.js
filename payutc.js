@@ -187,6 +187,31 @@ module.exports = {
 		},
 
 		login: {
+			
+			badge: function(params){
+				// var params = {badge_id, pin}
+				return payutcAPI.genericApiCall("POSS3", "loginBadge2", {badge_id: params.badge_id, pin: params.pin}, function(data){
+					var resp = JSON.parse(data);
+
+					if (typeof resp.sessionid != "undefined"){
+						payutcAPI.config.sessionID = resp.sessionid;
+						payutcAPI.config.logged_usr = resp.username;
+						console.log("Logged user successfully:", payutcAPI.config.logged_usr);
+					}else{
+						console.log("Invalid login, error: " + resp.error.type + " (" + resp.error.code+ ") :"+ resp.error.message);
+					}
+
+					if(params.callback) params.callback(data);
+
+					if(typeof resp.sessionid != "undefined"){
+						return 1;
+					}else{
+						return 0;
+					}
+
+				});
+			},
+			
 			cas: function(params){
 				// var params = {service, ticket}
 				return payutcAPI.genericApiCall("GESARTICLE", "loginCas2", {service: params.service, ticket: params.ticket}, function(data){

@@ -66,21 +66,19 @@ const payutcAPI = {
       });
 
       res.on('end', function() {
-        if (payutcAPI.config.debug) console.log(`Request to ${service}/${method} finished!`);
         if (callback) callback(response);
       });
     });
 
     request.on('error', function(e) {
-      // throw new Error("Error whith request: " + e.message);
-      console.warn('Error with request: ', e);
+      throw new Error(`Error whith request: ${e.message}`);
+      // console.warn('Error with request: ', e);
     });
 
     if (typeof data !== 'undefined') {
       options.headers = {
         'Content-type': 'application/json'
       };
-      if (payutcAPI.config.debug) console.log('Sending: ', data);
       request.write(JSON.stringify(data)); // session_id: this.sessionID
       request.end();
     } else {
@@ -89,6 +87,50 @@ const payutcAPI = {
     // console.log("URL Sent: ", url);
     // console.log("Data sent: ", String(data));
     // console.log("ResponseText: ", xml.responseText);
+  },
+
+  genericApiResourcesCall(method, service, objId, data, callback) {
+    let response = '';
+    let url = `/resources/${service}/${objId}?system_id=${this.config.systemID}&app_key=${this.config.app_key}`;
+
+    if (this.config.sessionID) {
+      url += `&sessionid=${this.config.sessionID}`;
+    }
+
+    const options = {
+      hostname: this.config.url,
+      path: url,
+      method,
+      headers: {
+        'Content-type': 'application/json',
+        'nemopay-version': '2018-07-03'
+      }
+    };
+
+    const request = http.request(options, function(res) {
+      res.setEncoding('utf8');
+      res.on('data', function(chunk) {
+        response += chunk;
+      });
+
+      res.on('end', function() {
+        if (callback) callback(response);
+      });
+    });
+
+    request.on('error', function(e) {
+      throw new Error(`Error whith request: ${e.message}`);
+    });
+
+    if (typeof data !== 'undefined') {
+      options.headers = {
+        'Content-type': 'application/json'
+      };
+      request.write(JSON.stringify(data)); // session_id: this.sessionID
+      request.end();
+    } else {
+      request.end();
+    }
   }
 };
 
@@ -187,9 +229,9 @@ module.exports = {
         if (typeof resp.sessionid !== 'undefined') {
           payutcAPI.config.sessionID = resp.sessionid;
           payutcAPI.config.logged_usr = resp.username;
-          console.log('Logged user successfully:', payutcAPI.config.logged_usr);
+          console.log('Logged user successfully:', payutcAPI.config.logged_usr); // eslint-disable-line no-console
         } else {
-          console.log(`Invalid login, error: ${resp.error.type} (${resp.error.code}) :${resp.error.message}`);
+          console.log(`Invalid login, error: ${resp.error.type} (${resp.error.code}) :${resp.error.message}`); // eslint-disable-line no-console
         }
 
         let result = 0;
@@ -214,9 +256,9 @@ module.exports = {
         if (typeof resp.sessionid !== 'undefined') {
           payutcAPI.config.sessionID = resp.sessionid;
           payutcAPI.config.logged_usr = resp.username;
-          console.log('Logged user successfully:', payutcAPI.config.logged_usr);
+          console.log('Logged user successfully:', payutcAPI.config.logged_usr); // eslint-disable-line no-console
         } else {
-          console.log(`Invalid login, error: ${resp.error}`);
+          console.log(`Invalid login, error: ${resp.error}`); // eslint-disable-line no-console
         }
 
         let result = 0;
@@ -239,9 +281,9 @@ module.exports = {
         if (typeof resp.sessionid !== 'undefined') {
           payutcAPI.config.sessionID = resp.sessionid;
           payutcAPI.config.logged_usr = resp.username;
-          console.log('Logged user successfully:', payutcAPI.config.logged_usr);
+          console.log('Logged user successfully:', payutcAPI.config.logged_usr); // eslint-disable-line no-console
         } else {
-          console.log(`Invalid login, error: ${resp.error.type} (${resp.error.code}) :${resp.error.message}`);
+          console.log(`Invalid login, error: ${resp.error.type} (${resp.error.code}) :${resp.error.message}`); // eslint-disable-line no-console
         }
 
         if (params.callback) params.callback(data);
@@ -261,7 +303,7 @@ module.exports = {
         if (typeof resp.sessionid !== 'undefined') {
           payutcAPI.config.sessionID = resp.sessionid;
           payutcAPI.config.logged_usr = resp.username;
-          console.log('Logged user successfully:', payutcAPI.config.logged_usr);
+          console.log('Logged user successfully:', payutcAPI.config.logged_usr); // eslint-disable-line no-console
         }
 
         if (typeof resp.sessionid !== 'undefined') {
@@ -481,6 +523,17 @@ module.exports = {
   },
 
   articles: {
+    setPrice(params) {
+      return payutcAPI.genericApiResourcesCall('GET', 'products', params.objId, null, product => {
+        const priceId = JSON.parse(product).events_config[1].price;
+
+        payutcAPI.genericApiResourcesCall('GET', 'prices', priceId, null, priceData => {
+          priceData = JSON.parse(priceData);
+          priceData.rows[0].value = params.price;
+          payutcAPI.genericApiResourcesCall('PUT', 'prices', priceId, priceData, params.callback);
+        });
+      });
+    },
     getArticles(params, selfpos) {
       // var params = {funId}
       if (selfpos) {
@@ -573,14 +626,10 @@ module.exports = {
           callback(dataProds) {
             const prod = JSON.parse(dataProds);
 
-            if (payutcAPI.config.debug) console.log('GetArticles on getProductsByCategory returned: ', dataProds);
-
             parent.getCategories(
               {
                 funIdsArray: [params.funId],
                 callback(dataCateg) {
-                  if (payutcAPI.config.debug) console.log('GetCategories on getProductsByCategory returned: ', dataCateg);
-
                   const categ = JSON.parse(dataCateg);
 
                   const resp = [];

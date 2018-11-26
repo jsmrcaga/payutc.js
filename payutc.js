@@ -233,9 +233,8 @@ module.exports = {
 				} else {
 					console.log(`Invalid login, error: ${resp.error.type} (${resp.error.code}) :${resp.error.message}`); // eslint-disable-line no-console
 				}
-
+        
 				let result = 0;
-
 				if (typeof resp.sessionid !== 'undefined') {
 					result = 1;
 				} else {
